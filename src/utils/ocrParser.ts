@@ -11,63 +11,63 @@ const NUTRIENT_PATTERNS: { key: keyof Nutrients; patterns: RegExp[] }[] = [
   {
     key: 'energy',
     patterns: [
-      /能量[^\d]*(\d+(?:\.\d+)?)\s*(?:千焦|kJ|kj|KJ)/i,
-      /热量[^\d]*(\d+(?:\.\d+)?)\s*(?:千焦|kJ|kj|KJ)/i,
-      /能量[^\d]*(\d+(?:\.\d+)?)\s*(?:千焦|kJ|kj|KJ)/i,
+      /能量[\s:：]*([\d.]+)\s*(?:千焦|kJ|kj|KJ)/i,
+      /热量[\s:：]*([\d.]+)\s*(?:千焦|kJ|kj|KJ)/i,
+      /能量[\s:：]*([\d.]+)\s*(?:千卡|kcal|大卡|千焦|kJ)/i,
     ],
   },
   {
     key: 'protein',
     patterns: [
-      /蛋白质[^\d]*(\d+(?:\.\d+)?)\s*g/i,
-      /蛋白[^\d]*(\d+(?:\.\d+)?)\s*g/i,
+      /蛋白质[\s:：]*([\d.]+)\s*(?:g|克)/i,
+      /蛋白[\s:：]*([\d.]+)\s*(?:g|克)/i,
     ],
   },
   {
     key: 'fat',
     patterns: [
-      /脂肪[^\d]*(\d+(?:\.\d+)?)\s*g/i,
-      /总脂肪[^\d]*(\d+(?:\.\d+)?)\s*g/i,
+      /脂肪[\s:：]*([\d.]+)\s*(?:g|克)/i,
+      /总脂肪[\s:：]*([\d.]+)\s*(?:g|克)/i,
     ],
   },
   {
     key: 'saturatedFat',
     patterns: [
-      /饱和脂肪[^\d]*(\d+(?:\.\d+)?)\s*g/i,
+      /饱和脂肪[\s:：]*([\d.]+)\s*(?:g|克)/i,
     ],
   },
   {
     key: 'transFat',
     patterns: [
-      /反式脂肪[^\d]*(\d+(?:\.\d+)?)\s*g/i,
-      /反式脂肪酸[^\d]*(\d+(?:\.\d+)?)\s*g/i,
+      /反式脂肪[\s:：]*([\d.]+)\s*(?:g|克)/i,
+      /反式脂肪酸[\s:：]*([\d.]+)\s*(?:g|克)/i,
     ],
   },
   {
     key: 'carbohydrates',
     patterns: [
-      /碳水化合物[^\d]*(\d+(?:\.\d+)?)\s*g/i,
-      /碳水[^\d]*(\d+(?:\.\d+)?)\s*g/i,
+      /碳水化合物[\s:：]*([\d.]+)\s*(?:g|克)/i,
+      /碳水[\s:：]*([\d.]+)\s*(?:g|克)/i,
     ],
   },
   {
     key: 'sugar',
     patterns: [
-      /糖[^\d]*(\d+(?:\.\d+)?)\s*g/i,
-      /添加糖[^\d]*(\d+(?:\.\d+)?)\s*g/i,
+      /糖[\s:：]*([\d.]+)\s*(?:g|克)/i,
+      /添加糖[\s:：]*([\d.]+)\s*(?:g|克)/i,
     ],
   },
   {
     key: 'sodium',
     patterns: [
-      /钠[^\d]*(\d+(?:\.\d+)?)\s*mg/i,
+      /钠[\s:：]*([\d.]+)\s*(?:mg|毫克)/i,
     ],
   },
   {
     key: 'fiber',
     patterns: [
-      /膳食纤维[^\d]*(\d+(?:\.\d+)?)\s*g/i,
-      /纤维[^\d]*(\d+(?:\.\d+)?)\s*g/i,
+      /膳食纤维[\s:：]*([\d.]+)\s*(?:g|克)/i,
+      /纤维[\s:：]*([\d.]+)\s*(?:g|克)/i,
     ],
   },
 ]
@@ -84,11 +84,10 @@ function extractNumber(text: string, patterns: RegExp[]): number | undefined {
 }
 
 function extractFoodName(text: string): string | undefined {
-  // 尝试从文本前几行找食品名称（通常是最长或最显眼的文字）
+  // 尝试从文本前几行找食品名称
   const lines = text.split(/\n/).map((l) => l.trim()).filter(Boolean)
-  // 优先找包含“净含量”、“规格”等前的文字，或直接取第一行非空行
-  for (const line of lines.slice(0, 5)) {
-    if (line.length >= 2 && line.length <= 20 && !/营养|成分|每100|NRV|能量|蛋白质|脂肪|碳水|钠|糖|mg|g/.test(line)) {
+  for (const line of lines.slice(0, 8)) {
+    if (line.length >= 2 && line.length <= 24 && !/营养|成分|每100|NRV|能量|蛋白质|脂肪|碳水|钠|糖|mg|g|千焦|大卡|配料/.test(line)) {
       return line
     }
   }
@@ -96,8 +95,8 @@ function extractFoodName(text: string): string | undefined {
 }
 
 function extractIngredients(text: string): string[] {
-  // 找“配料”或“配料表”后面的内容
-  const match = text.match(/配料(?:表)?[：:]\s*([\s\S]*?)(?:\n{2,}|营养成分|$)/)
+  // 匹配“配料”或“配料表”后面的内容，直到空行或“营养成分”
+  const match = text.match(/配料(?:表)?[：:]\s*([\s\S]*?)(?:\n{2,}|营养成分|项目|$)/i)
   if (!match) return []
   const ingredientText = match[1].replace(/\s+/g, ' ').trim()
   if (!ingredientText) return []
@@ -116,9 +115,9 @@ export function parseNutritionLabel(text: string): ParsedLabel {
     }
   }
 
-  // 能量单位转换：如果是 kcal 标注，转成 kJ
+  // 能量单位转换：如果是 kcal/千卡 标注，转成 kJ
   if (nutrients.energy === undefined) {
-    const kcalMatch = normalizedText.match(/能量[^\d]*(\d+(?:\.\d+)?)\s*(?:千卡|kcal|大卡)/i)
+    const kcalMatch = normalizedText.match(/能量[\s:：]*([\d.]+)\s*(?:千卡|kcal|大卡)/i)
     if (kcalMatch) {
       nutrients.energy = Math.round(Number.parseFloat(kcalMatch[1]) * 4.184)
     }

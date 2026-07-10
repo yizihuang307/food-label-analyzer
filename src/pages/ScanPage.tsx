@@ -6,6 +6,8 @@ import { Camera, ImageIcon, Loader2, PenLine } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const OCR_LANG_PATH = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/chi_sim/4.0.0_best_int'
+
 export function ScanPage() {
   const navigate = useNavigate()
   const setCurrentAnalysis = useAnalysisStore((s) => s.setCurrentAnalysis)
@@ -41,10 +43,32 @@ export function ScanPage() {
     setError(null)
 
     try {
-      const worker = await createWorker('chi_sim')
+      const worker = await createWorker('chi_sim', 1, {
+        logger: (m) => {
+          console.log('[OCR]', m)
+          if (m.status === 'loading language traineddata') {
+            setLoadingText('正在加载中文识别模型...')
+          } else if (m.status === 'recognizing text') {
+            setLoadingText(`正在识别... ${Math.round(m.progress * 100)}%`)
+          }
+        },
+        errorHandler: (err) => {
+          console.error('[OCR Worker Error]', err)
+        },
+        langPath: OCR_LANG_PATH,
+      })
+
       setLoadingText('正在识别图片中的文字...')
       const { data: { text } } = await worker.recognize(image)
       await worker.terminate()
+
+      console.log('OCR raw text:', text)
+
+      if (!text || text.trim().length < 5) {
+        setError('图片中文字太少或无法识别，建议换一张更清晰的图片，或手动输入')
+        setLoading(false)
+        return
+      }
 
       const parsed = parseNutritionLabel(text)
 
@@ -56,6 +80,7 @@ export function ScanPage() {
         servingUnit: '份',
         nutrientsPer100g: { ...getDefaultNutrients(), ...parsed.nutrients } as ReturnType<typeof getDefaultNutrients>,
         ingredients: parsed.ingredients,
+        rawOcrText: text,
         createdAt: Date.now(),
       }
 
@@ -63,7 +88,12 @@ export function ScanPage() {
       navigate('/review')
     } catch (err) {
       console.error('OCR error:', err)
-      setError('识别失败，请手动输入营养成分')
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes('network') || message.includes('fetch')) {
+        setError('识别模型下载失败，请检查网络，或选择手动输入')
+      } else {
+        setError('识别失败，请手动输入营养成分')
+      }
       setLoading(false)
     }
   }
@@ -143,6 +173,7 @@ export function ScanPage() {
               <div className="flex flex-col items-center justify-center rounded-2xl bg-slate-50 p-6">
                 <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
                 <p className="mt-3 text-sm text-slate-600">{loadingText}</p>
+                <p className="mt-2 text-xs text-slate-400">首次使用需下载约 10MB 模型</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">

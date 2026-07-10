@@ -2,7 +2,8 @@ import { Button } from '@/components/Button'
 import { analyzeFood } from '@/engine/analyzer'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import type { FoodAnalysis, Nutrients } from '@/types'
-import { ArrowRight, Calculator } from 'lucide-react'
+import { getDefaultNutrients, parseNutritionLabel } from '@/utils/ocrParser'
+import { ArrowRight, Calculator, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -27,20 +28,28 @@ export function ReviewPage() {
 
   const [foodName, setFoodName] = useState(currentAnalysis?.foodName || '')
   const [nutrients, setNutrients] = useState<Nutrients>(
-    currentAnalysis?.nutrientsPer100g || {
-      energy: 0, protein: 0, fat: 0, saturatedFat: 0, transFat: 0,
-      carbohydrates: 0, sugar: 0, sodium: 0, fiber: 0,
-    }
+    currentAnalysis?.nutrientsPer100g || getDefaultNutrients()
   )
   const [ingredientText, setIngredientText] = useState(
     currentAnalysis?.ingredients.join('，') || ''
   )
   const [servingSize, setServingSize] = useState(currentAnalysis?.servingSize || 1)
   const [servingUnit, setServingUnit] = useState(currentAnalysis?.servingUnit || '份')
+  const [rawText, setRawText] = useState(currentAnalysis?.rawOcrText || '')
+  const [showRaw, setShowRaw] = useState(false)
 
   const handleNutrientChange = (key: keyof Nutrients, value: string) => {
     const num = value === '' ? 0 : Number.parseFloat(value)
     setNutrients((prev) => ({ ...prev, [key]: Number.isNaN(num) ? 0 : num }))
+  }
+
+  const reparseFromRawText = () => {
+    const parsed = parseNutritionLabel(rawText)
+    setFoodName((prev) => prev || parsed.foodName || '')
+    setNutrients((prev) => ({ ...prev, ...parsed.nutrients }))
+    if (parsed.ingredients.length) {
+      setIngredientText(parsed.ingredients.join('，'))
+    }
   }
 
   const handleAnalyze = () => {
@@ -57,6 +66,7 @@ export function ReviewPage() {
       servingUnit,
       nutrientsPer100g: nutrients,
       ingredients,
+      rawOcrText: rawText,
       createdAt: Date.now(),
     }
 
@@ -101,6 +111,39 @@ export function ReviewPage() {
               className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base"
             />
           </div>
+
+          {currentAnalysis?.rawOcrText && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <button
+                type="button"
+                onClick={() => setShowRaw(!showRaw)}
+                className="flex w-full items-center justify-between text-sm font-medium text-slate-700"
+              >
+                <span>OCR 原始识别文字</span>
+                <span className="text-slate-400">{showRaw ? '收起' : '展开'}</span>
+              </button>
+              {showRaw && (
+                <div className="mt-3">
+                  <textarea
+                    value={rawText}
+                    onChange={(e) => setRawText(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={reparseFromRawText}
+                    className="mt-2"
+                  >
+                    <RefreshCw className="mr-1.5 h-4 w-4" />
+                    根据文字重新解析
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <h3 className="font-semibold text-slate-900">营养成分（每 100g）</h3>

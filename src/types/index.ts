@@ -20,6 +20,7 @@ export interface FoodAnalysis {
   servingUnit: string
   nutrientsPer100g: Nutrients
   ingredients: string[]
+  rawOcrText?: string
   createdAt: number
 }
 
