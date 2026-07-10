@@ -84,10 +84,17 @@ function extractNumber(text: string, patterns: RegExp[]): number | undefined {
 }
 
 function extractFoodName(text: string): string | undefined {
+  // 优先从“产品名称”提取
+  const productNameMatch = text.match(/产品名称[：:]\s*(.+)/i)
+  if (productNameMatch) {
+    const name = productNameMatch[1].trim().split(/\n/)[0].trim()
+    if (name.length >= 2 && name.length <= 40) return name
+  }
+
   // 尝试从文本前几行找食品名称
   const lines = text.split(/\n/).map((l) => l.trim()).filter(Boolean)
   for (const line of lines.slice(0, 8)) {
-    if (line.length >= 2 && line.length <= 24 && !/营养|成分|每100|NRV|能量|蛋白质|脂肪|碳水|钠|糖|mg|g|千焦|大卡|配料/.test(line)) {
+    if (line.length >= 2 && line.length <= 24 && !/营养|成分|每100|NRV|能量|蛋白质|脂肪|碳水|钠|糖|mg|g|千焦|大卡|配料|产品类型|产品名称|执行标准|净含量|生产日期|保质期|产地|储存/.test(line)) {
       return line
     }
   }

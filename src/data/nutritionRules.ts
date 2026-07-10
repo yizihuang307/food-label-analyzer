@@ -1,12 +1,13 @@
 import type { ScoreLevel } from '@/types'
 
 // 基于《中国居民膳食指南 2022》普通成年人参考值（2000 kcal 标准）
+// 注意：营养成分表中的能量通常以 kJ 标注，这里统一使用 kJ
 export const NUTRITION_RULES = {
   sodium: { threshold: 600, unit: 'mg', name: '钠', dailyMax: 2000 },
   sugar: { threshold: 15, unit: 'g', name: '糖', dailyMax: 50 },
   saturatedFat: { threshold: 5, unit: 'g', name: '饱和脂肪', dailyMax: 20 },
   transFat: { threshold: 0, unit: 'g', name: '反式脂肪', dailyMax: 0 },
-  energy: { threshold: 400, unit: 'kcal', name: '能量', dailyMax: 2000 },
+  energy: { threshold: 1673, unit: 'kJ', name: '能量', dailyMax: 8368 }, // 400 kcal / 2000 kcal
   carbohydrates: { threshold: 60, unit: 'g', name: '碳水化合物', dailyMax: 300 },
   protein: { threshold: 20, unit: 'g', name: '蛋白质', dailyMax: 60 },
 }

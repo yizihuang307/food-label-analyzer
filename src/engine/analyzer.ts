@@ -187,7 +187,7 @@ function getNutritionName(key: string): string {
 }
 
 function getNutritionUnit(key: string): string {
-  return key === 'energy' ? 'kcal' : key === 'sodium' ? 'mg' : 'g'
+  return key === 'energy' ? 'kJ' : key === 'sodium' ? 'mg' : 'g'
 }
 
 function getNutritionWarningTitle(key: string): string {
