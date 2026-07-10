@@ -1,4 +1,5 @@
 export type ScoreLevel = 'green' | 'yellow' | 'red'
+export type HealthLevel = 'recommended' | 'moderate' | 'caution'
 
 export interface Nutrients {
   energy: number        // kJ/100g
@@ -24,39 +25,43 @@ export interface FoodAnalysis {
   createdAt: number
 }
 
-export interface Warning {
-  type: 'ingredient' | 'nutrition'
-  level: ScoreLevel
-  title: string
-  description: string
+export interface DimensionScore {
+  score: number
+  maxScore: number
+  label: string
+  details: string[]
+}
+
+export interface Reason {
+  type: 'positive' | 'negative'
+  text: string
 }
 
 export interface IngredientInfo {
   name: string
   isAdditive: boolean
-  riskLevel?: ScoreLevel
+  riskLevel?: 'high' | 'medium' | 'low'
   category?: string
+  scoreImpact?: number
   description?: string
-}
-
-export interface NutrientHighlight {
-  name: string
-  value: number
-  unit: string
-  level: ScoreLevel
-  description: string
+  isUnknown?: boolean
 }
 
 export interface AnalysisResult {
   id: string
   foodName: string
   createdAt: number
-  ingredientScore: ScoreLevel
-  nutritionScore: ScoreLevel
-  overallSuggestion: string
-  warnings: Warning[]
+  totalScore: number
+  level: HealthLevel
+  levelText: string
+  suggestion: string
+  dimensions: {
+    ingredientCleanliness: DimensionScore
+    nutritionQuality: DimensionScore
+    processingLevel: DimensionScore
+  }
+  reasons: Reason[]
   ingredientBreakdown: IngredientInfo[]
-  nutrientHighlights: NutrientHighlight[]
 }
 
 export interface AppState {

@@ -9,6 +9,18 @@ export function HistoryPage() {
   const deleteResult = useAnalysisStore((s) => s.deleteResult)
   const clearHistory = useAnalysisStore((s) => s.clearHistory)
 
+  const scoreColor = (score: number) => {
+    if (score >= 85) return 'text-emerald-600'
+    if (score >= 60) return 'text-amber-600'
+    return 'text-red-600'
+  }
+
+  const scoreBg = (score: number) => {
+    if (score >= 85) return 'bg-emerald-100 text-emerald-700'
+    if (score >= 60) return 'bg-amber-100 text-amber-700'
+    return 'bg-red-100 text-red-700'
+  }
+
   return (
     <div className="min-h-svh flex flex-col">
       <header className="safe-top px-5 pt-6 pb-4">
@@ -55,28 +67,12 @@ export function HistoryPage() {
                     <p className="text-xs text-slate-500">
                       {new Date(item.createdAt).toLocaleString('zh-CN')}
                     </p>
-                    <div className="mt-2 flex gap-2">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          item.ingredientScore === 'green'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : item.ingredientScore === 'yellow'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-red-100 text-red-700'
-                        }`}
-                      >
-                        配料{item.ingredientScore === 'green' ? '干净' : item.ingredientScore === 'yellow' ? '一般' : '复杂'}
+                    <div className="mt-2 flex items-center gap-3">
+                      <span className={`text-2xl font-bold ${scoreColor(item.totalScore)}`}>
+                        {item.totalScore}
                       </span>
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          item.nutritionScore === 'green'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : item.nutritionScore === 'yellow'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-red-100 text-red-700'
-                        }`}
-                      >
-                        营养{item.nutritionScore === 'green' ? '可常吃' : item.nutritionScore === 'yellow' ? '适量吃' : '少吃'}
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${scoreBg(item.totalScore)}`}>
+                        {item.levelText}
                       </span>
                     </div>
                   </button>

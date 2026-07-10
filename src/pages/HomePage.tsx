@@ -8,40 +8,52 @@ export function HomePage() {
   const history = useAnalysisStore((s) => s.history)
   const recent = history.slice(0, 3)
 
+  const scoreColor = (score: number) => {
+    if (score >= 85) return 'text-emerald-600'
+    if (score >= 60) return 'text-amber-600'
+    return 'text-red-600'
+  }
+
+  const scoreBg = (score: number) => {
+    if (score >= 85) return 'bg-emerald-100 text-emerald-700'
+    if (score >= 60) return 'bg-amber-100 text-amber-700'
+    return 'bg-red-100 text-red-700'
+  }
+
   return (
     <div className="min-h-svh flex flex-col">
       <header className="safe-top px-5 pt-12 pb-8">
         <h1 className="text-3xl font-bold text-slate-900">食品标签营养师</h1>
         <p className="mt-2 text-slate-600">
-          拍照识别营养成分表，快速判断配料干净度和营养健康度
+          拍照识别营养成分表，获取 0-100 分健康评分
         </p>
       </header>
 
       <main className="flex-1 px-5">
         <div className="rounded-2xl bg-emerald-600 p-6 text-white shadow-lg">
-          <h2 className="text-xl font-semibold">适合谁用？</h2>
-          <ul className="mt-3 space-y-2 text-emerald-50">
-            <li>• 看不懂营养成分表的小白</li>
-            <li>• 想快速对比食品的营养师</li>
-            <li>• 关注添加剂和配料表的消费者</li>
-          </ul>
+          <h2 className="text-xl font-semibold">怎么评分？</h2>
+          <div className="mt-4 space-y-3 text-emerald-50">
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">40</span>
+              <span>配料干净度（数量、添加剂、陌生成分）</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">50</span>
+              <span>营养质量（钠、糖、脂肪、能量）</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">10</span>
+              <span>加工程度（香精、色素、增稠剂等）</span>
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4">
-          <Button
-            size="lg"
-            className="w-full shadow-md"
-            onClick={() => navigate('/scan')}
-          >
+          <Button size="lg" className="w-full shadow-md" onClick={() => navigate('/scan')}>
             <ScanLine className="mr-2 h-5 w-5" />
             拍照分析食品标签
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full"
-            onClick={() => navigate('/history')}
-          >
+          <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/history')}>
             <History className="mr-2 h-5 w-5" />
             查看历史记录
           </Button>
@@ -63,28 +75,12 @@ export function HomePage() {
                       {new Date(item.createdAt).toLocaleDateString('zh-CN')}
                     </span>
                   </div>
-                  <div className="mt-2 flex gap-2">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        item.ingredientScore === 'green'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : item.ingredientScore === 'yellow'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      配料{item.ingredientScore === 'green' ? '干净' : item.ingredientScore === 'yellow' ? '一般' : '复杂'}
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className={`text-2xl font-bold ${scoreColor(item.totalScore)}`}>
+                      {item.totalScore}
                     </span>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        item.nutritionScore === 'green'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : item.nutritionScore === 'yellow'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      营养{item.nutritionScore === 'green' ? '可常吃' : item.nutritionScore === 'yellow' ? '适量吃' : '少吃'}
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${scoreBg(item.totalScore)}`}>
+                      {item.levelText}
                     </span>
                   </div>
                 </button>

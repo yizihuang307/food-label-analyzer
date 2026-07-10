@@ -36,7 +36,7 @@ export const useAnalysisStore = create<AnalysisStore>()(
       clearHistory: () => set({ history: [] }),
     }),
     {
-      name: 'food-label-analyzer',
+      name: 'food-label-analyzer-v2',
       partialize: (state) => ({ history: state.history }),
     }
   )
